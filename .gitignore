@@ -1,0 +1,47 @@
+# Environnement virtuel
+venv/
+vnev/
+env/
+ENV/
+
+# Fichiers de cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers de base de données
+db.sqlite3
+*.db
+
+# Fichiers de configuration sensibles
+.env
+.env.local
+.env.production
+
+# Fichiers de logs
+*.log
+
+# Dossier de migrations (si vous voulez les inclure, laissez-le commenté)
+# migrations/
+
+# Dossiers de données
+data/
+
+# Fichiers de sauvegarde
+*.bak
+*.swp
+
+# Dossier de distribution
+dist/
+build/
+*.egg-info/
+
+# Fichiers d'IDE
+.vscode/
+.idea/
+*.iml
+
+# Dossier de fichiers statiques (si collectés)
+staticfiles/
+media/
