@@ -8,7 +8,7 @@ import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Charger les variables d'environnement
+# Charger les variables d'environnement (utile en local)
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'anymail',
+    'whitenoise.runserver_nostatic',  # Pour servir les fichiers statiques en local avec WhiteNoise
     'users',
     'terrains',
     'reservations',
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Ajout pour servir les fichiers statiques en production
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Pour les fichiers statiques en production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,11 +74,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cimetiere_backend.wsgi.application'
 
 # ============ BASE DE DONNÉES (adaptée pour Render) ============
+# Render fournit automatiquement la variable DATABASE_URL
+# Si elle n'est pas définie, on utilise les variables classiques (pour le développement local)
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=os.getenv('DATABASE_SSL_REQUIRE', 'True') == 'True'
     )
 }
 
