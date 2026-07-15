@@ -22,6 +22,11 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://cimetiere-backend-otr7.onrender.com',
+    'http://cimetiere-backend-otr7.onrender.com',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
