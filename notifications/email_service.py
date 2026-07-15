@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # notifications/email_service.py
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
@@ -181,7 +182,7 @@ def envoyer_facture_avec_expediteur(facture, pdf_content, expediteur_email, expe
     # Pour changer completement d'expediteur avec Gmail, il faut creer une connexion SMTP separee
     
     # Pour l'instant, on utilise la fonction standard avec from_email
-    # Cela fonctionne si le compte Gmail configuré dans settings.py est le meme que l'expediteur
+
     return envoyer_facture_email(facture, pdf_content, expediteur_email)
 
 def envoyer_mfa_code(email, code, from_email=None):
