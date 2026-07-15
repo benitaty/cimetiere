@@ -18,14 +18,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ll^2-z9avmquxu6xn5h8$8v1drii8dk9(qp2ax-eg*@p@o%#g7')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True  # au lieu de la ligne avec os.getenv
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cimetiere-backend-otr7.onrender.com',
     'http://cimetiere-backend-otr7.onrender.com',
-]
+] 
 
 # Application definition
 INSTALLED_APPS = [
