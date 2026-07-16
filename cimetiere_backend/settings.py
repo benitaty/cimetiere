@@ -78,16 +78,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cimetiere_backend.wsgi.application'
 
-# ============ BASE DE DONNÉES (adaptée pour Render) ============
-# Render fournit automatiquement la variable DATABASE_URL
-# Si elle n'est pas définie, on utilise les variables classiques (pour le développement local)
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=os.getenv('DATABASE_SSL_REQUIRE', 'True') == 'True'
-    )
-}
+# ============ BASE DE DONNÉES ============
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    # En production (sur Render), utiliser DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # En développement local, utiliser PostgreSQL avec des variables classiques
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'cimetiere'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 # ============ VALIDATION DES MOTS DE PASSE ============
 AUTH_PASSWORD_VALIDATORS = [
