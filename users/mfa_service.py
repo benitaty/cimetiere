@@ -10,17 +10,20 @@ def generer_code_otp():
 
 def envoyer_otp_utilisateur(user, from_email=None):
     otp_code = generer_code_otp()
+    
+    # 1. Sauvegarder le code en base AVANT l'envoi
     user.mfa_code = otp_code
     user.mfa_code_created_at = timezone.now()
     user.save()
-
-    # AFFICHAGE FORCE DANS LE TERMINAL
+    print(f"✅ Code sauvegardé en base : {otp_code}")
+    
+    # 2. Envoyer l'email
+    envoyer_mfa_code(user.email, otp_code, from_email)
+    
     print("="*50)
     print(f"🔐 CODE OTP POUR {user.email} : {otp_code}")
     print("="*50)
-
-    # Envoi réel (si SMTP configuré, ça part en email)
-    envoyer_mfa_code(user.email, otp_code, from_email)
+    
     return otp_code
 
 def verifier_otp(user, code_saisi):

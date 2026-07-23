@@ -184,10 +184,12 @@ class LoginPage:
 
         try:
             response = self.session.post(
-                "http://127.0.0.1:8000/api/users/signin",
+                "https://cimetiere-backend-otr7.onrender.com/api/users/signin",
                 json={"email": email, "password": password},
-                timeout=10
+                timeout=120
             )
+            print("Status code:", response.status_code)
+            print("Response text:", response.text)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("otp_envoye"):
@@ -226,7 +228,7 @@ class LoginPage:
             response = self.session.post(
                 "http://127.0.0.1:8000/api/users/signin/verifier-otp",
                 json={"email": self.email_for_otp, "code": code},
-                timeout=10
+                timeout=120
             )
             if response.status_code == 200:
                 data = response.json()
@@ -259,7 +261,7 @@ class LoginPage:
             response = self.session.post(
                 "http://127.0.0.1:8000/api/users/signin/renvoyer-otp",
                 json={"email": self.email_for_otp},
-                timeout=10
+                timeout=120
             )
             if response.status_code == 200:
                 self.status.value = "✅ Nouveau code OTP envoyé."

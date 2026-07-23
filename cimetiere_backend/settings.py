@@ -25,7 +25,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 CSRF_TRUSTED_ORIGINS = [
     'https://cimetiere-backend-otr7.onrender.com',
     'http://cimetiere-backend-otr7.onrender.com',
-] 
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'anymail',
-    'whitenoise.runserver_nostatic',  # Pour servir les fichiers statiques en local avec WhiteNoise
+    'whitenoise.runserver_nostatic',
     'users',
     'terrains',
     'reservations',
@@ -48,7 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Pour les fichiers statiques en production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -81,7 +81,6 @@ WSGI_APPLICATION = 'cimetiere_backend.wsgi.application'
 # ============ BASE DE DONNÉES ============
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
-    # En production (sur Render), utiliser DATABASE_URL
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -90,7 +89,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # En développement local, utiliser PostgreSQL avec des variables classiques
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -133,10 +131,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ============ CONFIGURATIONS PERSONNALISÉES ============
-# Modèle utilisateur personnalisé
 AUTH_USER_MODEL = 'users.User'
 
-# Configuration CORS
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -161,9 +157,12 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# ============ CONFIGURATION EMAIL (SendGrid) ============
-EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
-ANYMAIL = {
-    "SENDGRID_API_KEY": os.getenv('SENDGRID_API_KEY'),
-}
+# ============ CONFIGURATION EMAIL (Gmail SMTP) ============
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER','benitaty03@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD','esxpnivbohljhkze')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'benitaty03@gmail.com')

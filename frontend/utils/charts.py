@@ -5,11 +5,11 @@ import base64
 from datetime import datetime
 import requests
 
-API_URL = "http://127.0.0.1:8000/api"
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
 
 def get_reservations_data(session):
     try:
-        response = session.get(f"{API_URL}/reservations/reservations", timeout=5)
+        response = session.get(f"{API_URL}/reservations/reservations", timeout=120)
         if response.status_code == 200:
             return response.json()
         return []
@@ -19,7 +19,7 @@ def get_reservations_data(session):
 
 def get_finances_data(session):
     try:
-        response = session.get(f"{API_URL}/finances/factures", timeout=5)
+        response = session.get(f"{API_URL}/finances/factures", timeout=120)
         if response.status_code == 200:
             return response.json()
         return []
@@ -29,7 +29,7 @@ def get_finances_data(session):
 
 def get_caveaux_stats(session):
     try:
-        response = session.get(f"{API_URL}/terrains/statistiques", timeout=5)
+        response = session.get(f"{API_URL}/terrains/statistiques", timeout=120)
         if response.status_code == 200:
             return response.json()
         return {}

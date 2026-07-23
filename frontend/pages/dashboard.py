@@ -2,7 +2,7 @@
 import flet as ft
 import requests
 
-API_URL = "http://127.0.0.1:8000/api"
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
 
 class DashboardPage:
     def __init__(self, page: ft.Page, user_data, session, 
@@ -156,22 +156,22 @@ class DashboardPage:
 
     def charger_stats(self):
         try:
-            r = self.session.get(f"{API_URL}/terrains/statistiques", timeout=5)
+            r = self.session.get(f"{API_URL}/terrains/statistiques", timeout=120)
             if r.status_code == 200:
                 data = r.json()
                 self.card_taux.value = f"{data.get('taux_occupation', 0)}%"
 
-            r = self.session.get(f"{API_URL}/reservations/reservations/en-attente", timeout=5)
+            r = self.session.get(f"{API_URL}/reservations/reservations/en-attente", timeout=120)
             if r.status_code == 200:
                 en_attente = len(r.json())
                 self.card_en_attente.value = str(en_attente)
 
-            r = self.session.get(f"{API_URL}/reservations/reservations", timeout=5)
+            r = self.session.get(f"{API_URL}/reservations/reservations", timeout=120)
             if r.status_code == 200:
                 total = len(r.json())
                 self.card_reservations.value = str(total)
 
-            r = self.session.get(f"{API_URL}/finances/factures/en-attente", timeout=5)
+            r = self.session.get(f"{API_URL}/finances/factures/en-attente", timeout=120)
             if r.status_code == 200:
                 impayees = len(r.json())
                 self.card_impayees.value = str(impayees)
