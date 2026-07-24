@@ -1,4 +1,6 @@
 # frontend/utils/charts.py
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -9,7 +11,7 @@ API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
 
 def get_reservations_data(session):
     try:
-        response = session.get(f"{API_URL}/reservations/reservations", timeout=120)
+        response = session.get(f"{API_URL}/reservations/reservations", timeout=300)
         if response.status_code == 200:
             return response.json()
         return []
@@ -19,7 +21,7 @@ def get_reservations_data(session):
 
 def get_finances_data(session):
     try:
-        response = session.get(f"{API_URL}/finances/factures", timeout=120)
+        response = session.get(f"{API_URL}/finances/factures", timeout=300)
         if response.status_code == 200:
             return response.json()
         return []
@@ -29,7 +31,7 @@ def get_finances_data(session):
 
 def get_caveaux_stats(session):
     try:
-        response = session.get(f"{API_URL}/terrains/statistiques", timeout=120)
+        response = session.get(f"{API_URL}/terrains/statistiques", timeout=300)
         if response.status_code == 200:
             return response.json()
         return {}

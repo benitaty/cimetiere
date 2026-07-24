@@ -1,14 +1,14 @@
-# Dockerfile
 FROM python:3.12-slim
+
+# Installer les dépendances système pour matplotlib (libfreetype6, libpng)
+RUN apt-get update && apt-get install -y \
+    libfreetype6-dev \
+    libpng-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Définir le répertoire de travail
 WORKDIR /app
-
-# Installer les dépendances système
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copier les fichiers de dépendances
 COPY requirements.txt .
