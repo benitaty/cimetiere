@@ -186,11 +186,6 @@ def envoyer_facture_avec_expediteur(facture, pdf_content, expediteur_email, expe
     return envoyer_facture_email(facture, pdf_content, expediteur_email)
 
 def envoyer_mfa_code(email, code, from_email=None):
-    """
-    Envoie un code MFA/OTP par email
-    """
-
-    print(f"🔐 Envoi du code OTP à {email} - Code : {code}")
     sujet = "Code d'authentification - Cimetiere"
     
     message_plain = f"""
@@ -216,7 +211,21 @@ def envoyer_mfa_code(email, code, from_email=None):
     <p>Cordialement,<br>L'equipe du Cimetiere</p>
     """
     
-    return envoyer_email(sujet, message_plain, email, message_html, from_email)
+    try:
+        expediteur = from_email or settings.DEFAULT_FROM_EMAIL
+        send_mail(
+            subject=sujet,
+            message=message_plain,
+            from_email=expediteur,
+            recipient_list=[email],
+            html_message=message_html,
+            fail_silently=False,
+        )
+        print(f"✅ Email OTP envoyé à {email}")
+        return True
+    except Exception as e:
+        print(f"❌ Erreur envoi OTP : {e}")
+        return False
 
 # Alias pour la compatibilite avec le code existant
 def envoyer_code_mfa(email, code, from_email=None):
