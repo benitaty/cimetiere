@@ -189,6 +189,8 @@ def envoyer_mfa_code(email, code, from_email=None):
     """
     Envoie un code MFA/OTP par email
     """
+
+    print(f"🔐 Envoi du code OTP à {email} - Code : {code}")
     sujet = "Code d'authentification - Cimetiere"
     
     message_plain = f"""
