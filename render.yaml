@@ -1,9 +1,9 @@
-# render.yaml
 services:
   - type: web
-    name: cimetiere-api
+    name: cimetiere-backend
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
     startCommand: gunicorn cimetiere_backend.wsgi:application
     envVars:
       - key: DATABASE_URL
@@ -16,9 +16,4 @@ services:
         value: false
       - key: ALLOWED_HOSTS
         value: .onrender.com
-
-databases:
-  - name: cimetiere-db
-    databaseName: cimetiere
-    user: postgres
-    plan: free
+    pythonVersion: 3.12
