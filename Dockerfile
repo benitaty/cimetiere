@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# Installer les dépendances système pour matplotlib (libfreetype6, libpng)
+# Installer les dépendances système nécessaires pour matplotlib
 RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libpng-dev \
