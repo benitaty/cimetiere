@@ -3,7 +3,6 @@ import random
 import string
 from datetime import timedelta
 from django.utils import timezone
-from notifications.email_service import envoyer_mfa_code
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -15,12 +14,24 @@ def envoyer_otp_utilisateur(user, from_email=None):
     user.mfa_code = otp_code
     user.mfa_code_created_at = timezone.now()
     user.save()
-    
-    # Envoi direct par email (sans passer par email_service)
+
+    # Construction du message
     sujet = "Code d'authentification - Cimetiere"
-    message = f"Bonjour,\n\nVotre code d'authentification est : {otp_code}\n\nCe code est valable 5 minutes.\n\nCordialement,\nL'equipe du Cimetiere"
+    message = f"""
+    Bonjour,
+
+    Votre code d'authentification est : {otp_code}
+
+    Ce code est valable 5 minutes.
+
+    Si vous n'avez pas demande ce code, ignorez cet email.
+
+    Cordialement,
+    L'equipe du Cimetiere
+    """
+
     expediteur = from_email or settings.DEFAULT_FROM_EMAIL
-    
+
     try:
         send_mail(
             subject=sujet,
@@ -32,11 +43,12 @@ def envoyer_otp_utilisateur(user, from_email=None):
         print(f"✅ Email OTP envoyé à {user.email} - Code : {otp_code}")
     except Exception as e:
         print(f"❌ Erreur envoi OTP : {e}")
-    
+
+    # Affichage dans la console pour débogage
     print("="*50)
     print(f"🔐 CODE OTP POUR {user.email} : {otp_code}")
     print("="*50)
-    
+
     return otp_code
 
 def verifier_otp(user, code_saisi):
