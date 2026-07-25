@@ -15,7 +15,6 @@ def envoyer_otp_utilisateur(user, from_email=None):
     user.mfa_code_created_at = timezone.now()
     user.save()
 
-    # Construction du message
     sujet = "Code d'authentification - Cimetiere"
     message = f"""
     Bonjour,
@@ -44,7 +43,6 @@ def envoyer_otp_utilisateur(user, from_email=None):
     except Exception as e:
         print(f"❌ Erreur envoi OTP : {e}")
 
-    # Affichage dans la console pour débogage
     print("="*50)
     print(f"🔐 CODE OTP POUR {user.email} : {otp_code}")
     print("="*50)
