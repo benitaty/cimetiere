@@ -10,27 +10,18 @@ def generer_code_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def envoyer_otp_utilisateur(user, from_email=None):
+    print(f"🔍 Début de envoyer_otp_utilisateur pour {user.email}")
     otp_code = generer_code_otp()
     user.mfa_code = otp_code
     user.mfa_code_created_at = timezone.now()
     user.save()
+    print(f"✅ Code sauvegardé : {otp_code}")
 
-    # ==== MÊME CODE QUE /test-email ====
     sujet = "Code d'authentification - Cimetiere"
-    message = f"""
-    Bonjour,
-
-    Votre code d'authentification est : {otp_code}
-
-    Ce code est valable 5 minutes.
-
-    Si vous n'avez pas demande ce code, ignorez cet email.
-
-    Cordialement,
-    L'equipe du Cimetiere
-    """
+    message = f"Bonjour,\n\nVotre code d'authentification est : {otp_code}\n\nCe code est valable 5 minutes.\n\nCordialement,\nL'equipe du Cimetiere"
 
     try:
+        print(f"📧 Tentative d'envoi à {user.email} avec send_mail")
         send_mail(
             subject=sujet,
             message=message,
@@ -38,9 +29,9 @@ def envoyer_otp_utilisateur(user, from_email=None):
             recipient_list=[user.email],
             fail_silently=False,
         )
-        print(f"✅ Email OTP envoyé à {user.email} - Code : {otp_code}")
+        print("✅ send_mail a réussi")
     except Exception as e:
-        print(f"❌ Erreur envoi OTP : {e}")
+        print(f"❌ Erreur send_mail : {e}")
 
     print("="*50)
     print(f"🔐 CODE OTP POUR {user.email} : {otp_code}")
