@@ -8,14 +8,14 @@ from django.conf import settings
 
 def generer_code_otp():
     return ''.join(random.choices(string.digits, k=6))
+
 def envoyer_otp_utilisateur(user, from_email=None):
     otp_code = generer_code_otp()
     user.mfa_code = otp_code
     user.mfa_code_created_at = timezone.now()
     user.save()
 
-    print(f"🔐 OTP généré pour {user.email} : {otp_code}")
-
+    # ==== MÊME CODE QUE /test-email ====
     sujet = "Code d'authentification - Cimetiere"
     message = f"""
     Bonjour,
