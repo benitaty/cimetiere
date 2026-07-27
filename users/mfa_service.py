@@ -8,30 +8,28 @@ from django.conf import settings
 
 def generer_code_otp():
     return ''.join(random.choices(string.digits, k=6))
-
 def envoyer_otp_utilisateur(user, from_email=None):
     otp_code = generer_code_otp()
-    
-    # 1. Sauvegarder en base AVANT l'envoi
     user.mfa_code = otp_code
     user.mfa_code_created_at = timezone.now()
     user.save()
-    
-    # 2. Envoyer l'email (exactement comme /test-email)
+
+    print(f"🔐 OTP généré pour {user.email} : {otp_code}")
+
     sujet = "Code d'authentification - Cimetiere"
     message = f"""
     Bonjour,
-    
+
     Votre code d'authentification est : {otp_code}
-    
+
     Ce code est valable 5 minutes.
-    
+
     Si vous n'avez pas demande ce code, ignorez cet email.
-    
+
     Cordialement,
     L'equipe du Cimetiere
     """
-    
+
     try:
         send_mail(
             subject=sujet,
@@ -43,11 +41,11 @@ def envoyer_otp_utilisateur(user, from_email=None):
         print(f"✅ Email OTP envoyé à {user.email} - Code : {otp_code}")
     except Exception as e:
         print(f"❌ Erreur envoi OTP : {e}")
-    
+
     print("="*50)
     print(f"🔐 CODE OTP POUR {user.email} : {otp_code}")
     print("="*50)
-    
+
     return otp_code
 
 def verifier_otp(user, code_saisi):
