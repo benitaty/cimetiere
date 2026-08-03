@@ -3,6 +3,6 @@ from django.utils.deprecation import MiddlewareMixin
 
 class DisableCSRFForAPI(MiddlewareMixin):
     def process_request(self, request):
+        # Désactiver CSRF pour toutes les routes qui commencent par /api/
         if request.path.startswith('/api/'):
-            # Désactiver la vérification CSRF pour les requêtes API
-            setattr(request, '_dont_enforce_csrf_checks', True)
+            setattr(request, '_dont_enforce_csrf', True)
