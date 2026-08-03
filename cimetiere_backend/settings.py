@@ -18,9 +18,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ll^2-z9avmquxu6xn5h8$8v1drii8dk9(qp2ax-eg*@p@o%#g7')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # au lieu de la ligne avec os.getenv
+# Forcé à True pour le développement (à passer à False en production)
+DEBUG = True
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# ALLOWED_HOSTS accepte toutes les origines (pour le moment)
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cimetiere-backend-otr7.onrender.com',
@@ -165,7 +167,6 @@ ANYMAIL = {
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'benitaty03@gmail.com')
 
 # ============ CONFIGURATION DES COOKIES DE SESSION (cross-origin) ============
-# Permet à l'interface Flet (tournant sur localhost) de communiquer avec l'API sur Render
 SESSION_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SAMESITE = 'None'
 
