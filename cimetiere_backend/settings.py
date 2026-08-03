@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-    'anymail',                     # Nécessaire pour SendGrid
+    'anymail',
     'whitenoise.runserver_nostatic',
     'users',
     'terrains',
@@ -163,3 +163,16 @@ ANYMAIL = {
     "SENDGRID_API_KEY": os.getenv('SENDGRID_API_KEY'),
 }
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'benitaty03@gmail.com')
+
+# ============ CONFIGURATION DES COOKIES DE SESSION (cross-origin) ============
+# Permet à l'interface Flet (tournant sur localhost) de communiquer avec l'API sur Render
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = 'None'
+
+# En développement local (DEBUG=True), on désactive le secure pour permettre les cookies en HTTP
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
