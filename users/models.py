@@ -1,5 +1,6 @@
+import secrets
 from django.db import models
-
+from django.contrib.auth import get_user_model
 # Create your models here.
 # users/models.py
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -58,3 +59,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = 'Utilisateur'
         verbose_name_plural = 'Utilisateurs'
+User = get_user_model()
+# users/models.py (ajouter à la fin)
+class UserToken(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_hex(32)
+        super().save(*args, **kwargs)
