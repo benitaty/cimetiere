@@ -86,7 +86,7 @@ class CreerComptePage:
             response = self.session.post(
                 "http://127.0.0.1:8000/api/public/register",
                 json={"email": email, "password": password, "nom": nom, "prenom": prenom},
-                timeout=10
+                timeout=300
             )
             print("Status:", response.status_code)
             print("Content:", response.text)  # pour déboguer

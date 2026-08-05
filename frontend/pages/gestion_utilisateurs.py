@@ -76,7 +76,7 @@ class GestionUtilisateursPage:
     def charger_utilisateurs(self):
         print(">>> Chargement des utilisateurs")
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/users/", timeout=5)
+            response = self.session.get("http://127.0.0.1:8000/api/users/", timeout=300)
             if response.status_code == 200:
                 self.users = response.json()
                 self.afficher_utilisateurs()
@@ -151,7 +151,7 @@ class GestionUtilisateursPage:
             response = self.session.put(
                 f"http://127.0.0.1:8000/api/users/{user_id}/role",
                 json={"role": nouveau_role},
-                timeout=5,
+                timeout=300,
             )
             if response.status_code == 200:
                 self.status.value = f"✅ Rôle mis à jour pour l'utilisateur #{user_id}"
@@ -173,7 +173,7 @@ class GestionUtilisateursPage:
             try:
                 response = self.session.delete(
                     f"http://127.0.0.1:8000/api/users/{user_id}",
-                    timeout=5,
+                    timeout=300,
                 )
                 if response.status_code == 200:
                     self.status.value = f"✅ Utilisateur #{user_id} supprimé avec succès"
@@ -248,7 +248,7 @@ class GestionUtilisateursPage:
                         "prenom": prenom,
                         "role": role,
                     },
-                    timeout=5,
+                    timeout=300,
                 )
                 if response.status_code == 200:
                     status_msg.value = "✅ Utilisateur créé avec succès !"

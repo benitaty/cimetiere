@@ -159,7 +159,7 @@ class CreerReservationPage:
 
     def charger_caveaux(self):
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/terrains/caveaux/disponibles", timeout=5)
+            response = self.session.get("http://127.0.0.1:8000/api/terrains/caveaux/disponibles", timeout=300)
             if response.status_code == 200:
                 data = response.json()
                 if not data:

@@ -2,12 +2,15 @@
 import flet as ft
 import requests
 
+# URL de l'API en production (Render)
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
+
 class LoginPage:
     def __init__(self, page: ft.Page, session, on_login_success, go_to_creer_compte):
         self.page = page
         self.session = session
         self.on_login_success = on_login_success
-        self.go_to_creer_compte = go_to_creer_compte  # <-- NOUVEAU
+        self.go_to_creer_compte = go_to_creer_compte
 
         # --- CHAMPS ---
         self.email = ft.TextField(
@@ -98,7 +101,7 @@ class LoginPage:
             ),
         )
 
-        # --- NOUVEAU BOUTON : Créer un compte client ---
+        # --- BOUTON : Créer un compte client ---
         self.btn_creer_compte = ft.TextButton(
             "Créer un compte client",
             on_click=lambda e: self.go_to_creer_compte(),
@@ -117,7 +120,7 @@ class LoginPage:
             spacing=5,
         )
 
-        # --- FORMULAIRE AVEC LE NOUVEAU BOUTON ---
+        # --- FORMULAIRE ---
         form = ft.Column(
             [
                 self.email,
@@ -172,7 +175,7 @@ class LoginPage:
     def get_content(self):
         return self.content
 
-    # ---------- MÉTHODES OTP (inchangées) ----------
+    # ---------- ENVOI OTP ----------
     def send_otp(self, e):
         email = self.email.value
         password = self.password.value
@@ -184,16 +187,16 @@ class LoginPage:
 
         try:
             response = self.session.post(
-                "https://cimetiere-backend-otr7.onrender.com/api/users/signin",
+                f"{API_URL}/users/signin",
                 json={"email": email, "password": password},
-                timeout=120
+                timeout=300
             )
             print("Status code:", response.status_code)
             print("Response text:", response.text)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("otp_envoye"):
-                    self.status.value = "✅ Code OTP envoyé (consultez la console Django)."
+                    self.status.value = "✅ Code OTP envoyé par email."
                     self.status.color = ft.Colors.GREEN_700
                     self.email_for_otp = email
                     self.otp_code.visible = True
@@ -216,6 +219,7 @@ class LoginPage:
             self.status.color = ft.Colors.RED_700
             self.page.update()
 
+    # ---------- VÉRIFICATION OTP ----------
     def verify_otp(self, e):
         code = self.otp_code.value
         if not code:
@@ -226,17 +230,29 @@ class LoginPage:
 
         try:
             response = self.session.post(
-                "http://127.0.0.1:8000/api/users/signin/verifier-otp",
+                f"{API_URL}/users/signin/verifier-otp",
                 json={"email": self.email_for_otp, "code": code},
-                timeout=120
+                timeout=300
             )
             if response.status_code == 200:
                 data = response.json()
                 if data.get("authenticated"):
+                    # Récupérer les données utilisateur et le token
+                    user_data = {
+                        "email": data.get("email"),
+                        "nom": data.get("nom"),
+                        "prenom": data.get("prenom"),
+                        "role": data.get("role"),
+                        "user_id": data.get("user_id"),
+                    }
+                    token = data.get("token")  # <-- Récupération du token
+
                     self.status.value = "✅ Authentification réussie !"
                     self.status.color = ft.Colors.GREEN_700
                     self.page.update()
-                    self.on_login_success(data)
+
+                    # Appeler la fonction de callback avec les données ET le token
+                    self.on_login_success(user_data, token)
                 else:
                     self.status.value = data.get("error", "Code invalide ou expiré.")
                     self.status.color = ft.Colors.RED_700
@@ -251,6 +267,7 @@ class LoginPage:
             self.status.color = ft.Colors.RED_700
             self.page.update()
 
+    # ---------- RENVOI OTP ----------
     def resend_otp(self, e):
         if not self.email_for_otp:
             return
@@ -259,9 +276,9 @@ class LoginPage:
         self.page.update()
         try:
             response = self.session.post(
-                "http://127.0.0.1:8000/api/users/signin/renvoyer-otp",
+                f"{API_URL}/users/signin/renvoyer-otp",
                 json={"email": self.email_for_otp},
-                timeout=120
+                timeout=300
             )
             if response.status_code == 200:
                 self.status.value = "✅ Nouveau code OTP envoyé."

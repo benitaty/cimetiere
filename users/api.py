@@ -1,4 +1,5 @@
 # users/users_router.py
+from users.models import UserToken
 from ninja import Router, Schema
 from typing import List, Optional
 from django.contrib.auth import get_user_model, login, logout
@@ -52,12 +53,14 @@ def signin(request, payload: LoginSchema):
         return {"error": "Utilisateur non trouve"}
     if not user.check_password(payload.password):
         return {"error": "Mot de passe incorrect"}
+    token, _ = UserToken.objects.get_or_create(user=user)
     envoyer_otp_utilisateur(user)
     return {
         "message": "Code OTP envoye par email",
         "email": user.email,
         "otp_envoye": True,
-        "expire_dans": "5 minutes"
+        "expire_dans": "5 minutes",
+        "token": token.token,  # <-- On renvoie le token
     }
 
 @router.post("/signin/verifier-otp", auth=None)
@@ -66,9 +69,14 @@ def verifier_otp_endpoint(request, payload: VerifyOTPSchema):
         user = User.objects.get(email=payload.email)
     except User.DoesNotExist:
         return {"error": "Utilisateur non trouve"}
+
     if verifier_otp(user, payload.code):
         nettoyer_otp(user)
         login(request, user)
+
+        # Récupérer ou créer le token pour cet utilisateur
+        token, _ = UserToken.objects.get_or_create(user=user)
+
         return {
             "message": "Authentification reussie",
             "email": user.email,
@@ -77,11 +85,11 @@ def verifier_otp_endpoint(request, payload: VerifyOTPSchema):
             "role": user.role,
             "authenticated": True,
             "user_id": user.id,
-            "email_expediteur": user.email_expediteur or None
+            "email_expediteur": user.email_expediteur or None,
+            "token": token.token,  # <-- Ajout du token
         }
     else:
         return {"error": "Code OTP invalide ou expire"}
-
 @router.post("/signin/renvoyer-otp", auth=None)
 def renvoyer_otp(request, payload: RenvoyerOTPSchema):
     try:

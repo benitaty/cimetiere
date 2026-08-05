@@ -15,7 +15,8 @@ def envoyer_otp_utilisateur(user, from_email=None):
     user.mfa_code_created_at = timezone.now()
     user.save()
 
-    # ==== MÊME CODE QUE /test-email ====
+    print(f"🔐 OTP généré pour {user.email} : {otp_code}")
+
     sujet = "Code d'authentification - Cimetiere"
     message = f"""
     Bonjour,

@@ -82,7 +82,7 @@ class CartePage:
 
     def charger_donnees(self):
         try:
-            response = self.session.get(f"{API_URL}/terrains/caveaux", timeout=120)
+            response = self.session.get(f"{API_URL}/terrains/caveaux", timeout=300)
             if response.status_code != 200:
                 self.carte_message.value = f"❌ Erreur API: {response.status_code}"
                 self.carte_message.color = ft.Colors.RED
@@ -90,7 +90,7 @@ class CartePage:
                 return
 
             caveaux = response.json()
-            stats_response = self.session.get(f"{API_URL}/terrains/statistiques", timeout=120)
+            stats_response = self.session.get(f"{API_URL}/terrains/statistiques", timeout=300)
             stats = stats_response.json() if stats_response.status_code == 200 else {}
 
             self.stats_cards["total"].value = str(stats.get('total', 0))

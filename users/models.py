@@ -1,10 +1,6 @@
 import secrets
 from django.db import models
-from django.contrib.auth import get_user_model
-# Create your models here.
-# users/models.py
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db import models
 from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
@@ -41,13 +37,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     mfa_enabled = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(null=True, blank=True)
-    # ... champs existants ...
+    
+    # Champs MFA
     mfa_code = models.CharField(max_length=6, blank=True, null=True)
     mfa_code_created_at = models.DateTimeField(blank=True, null=True)
     email_expediteur = models.EmailField(max_length=255, blank=True, null=True)
     mot_de_passe_expediteur = models.CharField(max_length=255, blank=True, null=True)
 
-    
     objects = CustomUserManager()
     
     USERNAME_FIELD = 'email'
@@ -59,8 +55,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = 'Utilisateur'
         verbose_name_plural = 'Utilisateurs'
-User = get_user_model()
-# users/models.py (ajouter à la fin)
+
+
+# ============ MODÈLE POUR L'AUTHENTIFICATION PAR TOKEN ============
 class UserToken(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=255, unique=True)
@@ -68,5 +65,8 @@ class UserToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.token:
-            self.token = secrets.token_hex(32)
+            self.token = secrets.token_hex(32)  # Génère un token aléatoire sécurisé
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Token de {self.user.email}"

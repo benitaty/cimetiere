@@ -80,7 +80,7 @@ class GestionReservationsPage:
         try:
             response = self.session.get(
                 "http://127.0.0.1:8000/api/reservations/reservations",
-                timeout=5,
+                timeout=300,
             )
             if response.status_code == 200:
                 self.reservations = response.json()
@@ -169,7 +169,7 @@ class GestionReservationsPage:
         try:
             response = self.session.put(
                 f"http://127.0.0.1:8000/api/reservations/reservations/{reservation_id}/valider",
-                timeout=10,
+                timeout=300,
             )
             if response.status_code == 200:
                 self.status.value = f"✅ Réservation #{reservation_id} validée ! Facture envoyée."

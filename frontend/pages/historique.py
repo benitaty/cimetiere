@@ -83,7 +83,7 @@ class HistoriquePage:
 
     def charger_historique(self):
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/reservations/historique", timeout=5)
+            response = self.session.get("http://127.0.0.1:8000/api/reservations/historique", timeout=300)
             if response.status_code == 200:
                 data = response.json()
                 rows = []

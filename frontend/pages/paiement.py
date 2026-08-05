@@ -65,7 +65,7 @@ class PaiementPage:
 
     def charger_factures(self):
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/finances/factures", timeout=5)
+            response = self.session.get("http://127.0.0.1:8000/api/finances/factures", timeout=300)
             if response.status_code == 200:
                 self.factures = response.json()
                 self.afficher_factures()
@@ -181,7 +181,7 @@ class PaiementPage:
             response = self.session.post(
                 "http://127.0.0.1:8000/api/finances/paiements-airtel",
                 json={"facture_id": facture_id, "numero_telephone": telephone},
-                timeout=10,
+                timeout=300,
             )
             if response.status_code == 200:
                 data = response.json()

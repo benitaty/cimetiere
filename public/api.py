@@ -38,3 +38,6 @@ def test_email(request):
         return {"message": "Email envoyé avec succès"}
     except Exception as e:
         return {"error": str(e)}
+@router.get("/health")
+def health(request):
+    return {"status": "ok"}  
