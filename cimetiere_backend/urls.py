@@ -1,7 +1,6 @@
 # cimetiere_backend/urls.py
 from django.contrib import admin
 from django.urls import path
-from django.views.decorators.csrf import csrf_exempt
 from ninja import NinjaAPI
 from ninja.security import SessionAuth
 
@@ -31,5 +30,5 @@ api.add_router("/notifications/", notifications_router, tags=["Notifications"])
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', csrf_exempt(api.urls)),  # Désactive CSRF pour toute l'API
+    path('api/', api.urls),  # <-- Retour à la version simple (sans include)
 ]
