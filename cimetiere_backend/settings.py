@@ -53,8 +53,8 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # <-- Laissez celui-ci (protège l'admin)
-    'cimetiere_backend.middleware.TokenAuthMiddleware',  # <-- Votre middleware token
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'cimetiere_backend.middleware.TokenAuthMiddleware',  # <-- Laissez-le
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

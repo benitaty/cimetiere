@@ -1,7 +1,6 @@
 # cimetiere_backend/urls.py
 from django.contrib import admin
 from django.urls import path
-from django.views.decorators.csrf import csrf_exempt
 from ninja import NinjaAPI
 
 from users.api import router as users_router
@@ -12,14 +11,14 @@ from finances.api import router as finances_router
 from notifications.api import router as notifications_router
 from public.api import router as public_router
 
-# Créer l'API
+# Créer l'API SANS AUCUNE AUTHENTIFICATION GLOBALE
 api = NinjaAPI(
     title="Gestion Cimetiere API",
     version="1.0.0",
     description="API pour la gestion des emplacements funeraires",
+    # PAS de auth=... ici !
 )
 
-# Ajouter les routes
 api.add_router("/users/", users_router, tags=["Utilisateurs"])
 api.add_router("/public/", public_router, tags=["Public"])
 api.add_router("/terrains/", terrains_router, tags=["Terrain"])
@@ -28,10 +27,7 @@ api.add_router("/concessions/", concessions_router, tags=["Concessions"])
 api.add_router("/finances/", finances_router, tags=["Finances"])
 api.add_router("/notifications/", notifications_router, tags=["Notifications"])
 
-# Appliquer csrf_exempt à la vue API complète
-api_view = csrf_exempt(api)
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', api_view),  # <-- Utiliser api_view (vue désactivée CSRF)
+    path('api/', api.urls),  # Plus besoin de csrf_exempt
 ]
