@@ -1,32 +1,30 @@
 # cimetiere_backend/middleware.py
+from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
 from users.models import UserToken
 
-class DisableCSRFForAPI(MiddlewareMixin):
+class CustomCsrfMiddleware(CsrfViewMiddleware):
     """
-    Désactive la vérification CSRF pour toutes les routes commençant par /api/.
+    Middleware CSRF personnalisé qui ignore les requêtes commençant par /api/.
     """
     def process_request(self, request):
+        # Ignorer la vérification CSRF pour toutes les routes /api/
         if request.path.startswith('/api/'):
-            # Désactiver CSRF en définissant un attribut spécial
-            setattr(request, '_dont_enforce_csrf', True)
-            request.csrf_processing_done = True
-        return None
+            return None  # Ne pas appliquer la vérification CSRF
+        # Appliquer la vérification CSRF normale pour les autres routes
+        return super().process_request(request)
 
 
 class TokenAuthMiddleware(MiddlewareMixin):
     """
     Middleware d'authentification par token pour l'API.
-    Ignore les requêtes qui ne commencent pas par /api/.
     """
     def process_request(self, request):
-        # Ne pas bloquer les requêtes qui ne sont pas destinées à l'API
-        print(f"🔍 Middleware CSRF déclenché pour {request.path}")
         if not request.path.startswith('/api/'):
             return None
 
-        # Exclure les endpoints d'authentification (publics)
+        # Exclure les endpoints publics
         if (request.path.startswith('/api/users/signin') or
             request.path.startswith('/api/users/signin/verifier-otp') or
             request.path.startswith('/api/users/signin/renvoyer-otp') or
