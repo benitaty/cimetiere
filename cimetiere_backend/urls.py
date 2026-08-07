@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 from ninja import NinjaAPI
-from ninja.security import SessionAuth
+#from ninja.security import SessionAuth
 
 from users.api import router as users_router
 from terrains.api import router as terrains_router
@@ -17,7 +17,7 @@ api = NinjaAPI(
     title="Gestion Cimetiere API",
     version="1.0.0",
     description="API pour la gestion des emplacements funeraires",
-    auth=SessionAuth(),
+    # auth=SessionAuth(),
     csrf=False,
 )
 
