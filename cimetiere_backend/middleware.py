@@ -4,18 +4,25 @@ from django.http import JsonResponse
 from users.models import UserToken
 
 class DisableCSRFForAPI(MiddlewareMixin):
+    """
+    Désactive la vérification CSRF pour toutes les routes commençant par /api/.
+    """
     def process_request(self, request):
-        # Désactiver CSRF pour toutes les routes qui commencent par /api/
         if request.path.startswith('/api/'):
             # Désactiver CSRF en définissant un attribut spécial
             setattr(request, '_dont_enforce_csrf', True)
-            # Alternative : désactiver la vérification CSRF pour cette requête
             request.csrf_processing_done = True
         return None
 
+
 class TokenAuthMiddleware(MiddlewareMixin):
+    """
+    Middleware d'authentification par token pour l'API.
+    Ignore les requêtes qui ne commencent pas par /api/.
+    """
     def process_request(self, request):
         # Ne pas bloquer les requêtes qui ne sont pas destinées à l'API
+        print(f"🔍 Middleware CSRF déclenché pour {request.path}")
         if not request.path.startswith('/api/'):
             return None
 
