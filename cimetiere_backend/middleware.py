@@ -1,12 +1,11 @@
 # cimetiere_backend/middleware.py
 from django.middleware.csrf import CsrfViewMiddleware
-from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
 from users.models import UserToken
 
 class CustomCsrfMiddleware(CsrfViewMiddleware):
     """
-    Middleware CSRF personnalisé qui ignore les requêtes commençant par /api/.
+    Middleware CSRF qui ignore les requêtes commençant par /api/.
     """
     def process_request(self, request):
         # Ignorer la vérification CSRF pour toutes les routes /api/
@@ -16,20 +15,24 @@ class CustomCsrfMiddleware(CsrfViewMiddleware):
         return super().process_request(request)
 
 
-class TokenAuthMiddleware(MiddlewareMixin):
+class TokenAuthMiddleware:
     """
     Middleware d'authentification par token pour l'API.
     """
-    def process_request(self, request):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Ne pas bloquer les requêtes qui ne sont pas destinées à l'API
         if not request.path.startswith('/api/'):
-            return None
+            return self.get_response(request)
 
         # Exclure les endpoints publics
         if (request.path.startswith('/api/users/signin') or
             request.path.startswith('/api/users/signin/verifier-otp') or
             request.path.startswith('/api/users/signin/renvoyer-otp') or
             request.path.startswith('/api/public/')):
-            return None
+            return self.get_response(request)
 
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Token '):
@@ -42,4 +45,4 @@ class TokenAuthMiddleware(MiddlewareMixin):
         except UserToken.DoesNotExist:
             return JsonResponse({"error": "Token invalide"}, status=401)
 
-        return None
+        return self.get_response(request)

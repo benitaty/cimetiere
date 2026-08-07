@@ -11,12 +11,11 @@ from finances.api import router as finances_router
 from notifications.api import router as notifications_router
 from public.api import router as public_router
 
-# Créer l'API SANS AUCUNE AUTHENTIFICATION GLOBALE
+# API SANS authentification globale (TokenAuthMiddleware gère la sécurité)
 api = NinjaAPI(
     title="Gestion Cimetiere API",
     version="1.0.0",
     description="API pour la gestion des emplacements funeraires",
-    # PAS de auth=... ici !
 )
 
 api.add_router("/users/", users_router, tags=["Utilisateurs"])
@@ -29,5 +28,5 @@ api.add_router("/notifications/", notifications_router, tags=["Notifications"])
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', api.urls),  # Plus besoin de csrf_exempt
+    path('api/', api.urls),  # Configuration simple
 ]
