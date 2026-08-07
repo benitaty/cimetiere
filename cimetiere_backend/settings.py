@@ -52,10 +52,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    #'cimetiere_backend.middleware.DisableCSRFForAPI',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'cimetiere_backend.middleware.TokenAuthMiddleware', # <-- Ajoutez cette ligne
+    #'cimetiere_backend.middleware.TokenAuthMiddleware', # <-- Ajoutez cette ligne
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
