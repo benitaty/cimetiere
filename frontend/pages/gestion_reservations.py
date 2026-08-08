@@ -3,6 +3,8 @@ import flet as ft
 import requests
 from datetime import datetime
 
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
+
 class GestionReservationsPage:
     def __init__(self, page: ft.Page, session, go_back):
         self.page = page
@@ -79,14 +81,14 @@ class GestionReservationsPage:
     def charger_reservations(self):
         try:
             response = self.session.get(
-                "http://127.0.0.1:8000/api/reservations/reservations",
-                timeout=300,
+                f"{API_URL}/reservations/reservations",
+                timeout=30,
             )
             if response.status_code == 200:
                 self.reservations = response.json()
                 self.afficher_reservations()
             else:
-                self.status.value = f"⚠️ Erreur API: {response.status_code}"
+                self.status.value = f"⚠️ Erreur API: {response.status_code} - {response.text}"
                 self.status.color = ft.Colors.RED_700
         except Exception as e:
             self.status.value = f"❌ Erreur: {e}"
@@ -110,14 +112,22 @@ class GestionReservationsPage:
                 'ANNULE': ft.Colors.RED_700,
             }.get(statut, ft.Colors.GREY_700)
 
-            # --- Ligne d'informations (largeurs ajustées) ---
+            # --- Extraction des données (adaptée à la réponse de l'API) ---
+            caveau = r.get('caveau', {})
+            client = r.get('client', {})
+            caveau_num = caveau.get('numero', 'N/C') if isinstance(caveau, dict) else str(caveau)
+            client_nom = client.get('nom', 'N/C') if isinstance(client, dict) else str(client)
+            date_debut = r.get('date_debut', 'N/C')[:10] if r.get('date_debut') else 'N/C'
+            date_fin = r.get('date_fin', 'N/C')[:10] if r.get('date_fin') else 'N/C'
+
+            # --- Ligne d'informations ---
             info_row = ft.Row(
                 [
                     ft.Text(f"ID: {r['id']}", width=45, weight=ft.FontWeight.BOLD),
-                    ft.Text(f"Cav: {r['caveau']}", width=100),
-                    ft.Text(f"Client: {r['client']}", width=180),
-                    ft.Text(f"Début: {r['date_debut']}", width=100),
-                    ft.Text(f"Fin: {r['date_fin']}", width=100),
+                    ft.Text(f"Cav: {caveau_num}", width=100),
+                    ft.Text(f"Client: {client_nom}", width=180),
+                    ft.Text(f"Début: {date_debut}", width=100),
+                    ft.Text(f"Fin: {date_fin}", width=100),
                     ft.Container(
                         content=ft.Text(statut, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
                         bgcolor=couleur_statut,
@@ -168,15 +178,18 @@ class GestionReservationsPage:
     def valider_reservation(self, reservation_id):
         try:
             response = self.session.put(
-                f"http://127.0.0.1:8000/api/reservations/reservations/{reservation_id}/valider",
-                timeout=300,
+                f"{API_URL}/reservations/reservations/{reservation_id}/valider",
+                timeout=30,
             )
             if response.status_code == 200:
                 self.status.value = f"✅ Réservation #{reservation_id} validée ! Facture envoyée."
                 self.status.color = ft.Colors.GREEN_700
-                self.charger_reservations()  # recharge la liste
+                self.charger_reservations()
             else:
-                error = response.json().get("error", "Erreur inconnue")
+                try:
+                    error = response.json().get("error", "Erreur inconnue")
+                except:
+                    error = response.text
                 self.status.value = f"❌ Erreur: {error}"
                 self.status.color = ft.Colors.RED_700
         except Exception as e:

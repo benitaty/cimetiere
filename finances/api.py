@@ -53,7 +53,51 @@ class PaiementAirtelSchema(Schema):
     facture_id: int
     numero_telephone: str
 
-# ============ ENDPOINTS FACTURES ============
+
+# ============================================================
+# 1. ROUTES FIXES (sans paramètre) – DOIVENT ÊTRE EN PREMIER
+# ============================================================
+
+@router.get("/factures", response=List[FactureSchema])
+def list_factures(request):
+    """Liste de toutes les factures"""
+    factures = Facture.objects.all().select_related('reservation')
+    return [
+        {
+            "id": f.id,
+            "numero_facture": f.numero_facture,
+            "reservation_id": f.reservation.id,
+            "montant_total": f.montant_total,
+            "montant_paye": f.montant_paye,
+            "date_emission": f.date_emission.isoformat(),
+            "date_echeance": f.date_echeance,
+            "statut": f.statut,
+            "notes": f.notes
+        }
+        for f in factures
+    ]
+
+
+@router.get("/factures/en-attente", response=List[FactureSchema])
+def factures_en_attente(request):
+    """Liste des factures en attente de paiement"""
+    factures = Facture.objects.filter(statut='EN_ATTENTE').select_related('reservation')
+    return [
+        {
+            "id": f.id,
+            "numero_facture": f.numero_facture,
+            "reservation_id": f.reservation.id,
+            "montant_total": f.montant_total,
+            "montant_paye": f.montant_paye,
+            "date_emission": f.date_emission.isoformat(),
+            "date_echeance": f.date_echeance,
+            "statut": f.statut,
+            "notes": f.notes
+        }
+        for f in factures
+    ]
+
+
 @router.post("/factures", response={201: dict, 400: dict, 404: dict})
 def creer_facture(request, payload: FactureCreateSchema):
     try:
@@ -82,23 +126,10 @@ def creer_facture(request, payload: FactureCreateSchema):
     except Exception as e:
         return 400, {"error": str(e)}
 
-@router.get("/factures", response=List[FactureSchema])
-def list_factures(request):
-    factures = Facture.objects.all().select_related('reservation')
-    return [
-        {
-            "id": f.id,
-            "numero_facture": f.numero_facture,
-            "reservation_id": f.reservation.id,
-            "montant_total": f.montant_total,
-            "montant_paye": f.montant_paye,
-            "date_emission": f.date_emission.isoformat(),
-            "date_echeance": f.date_echeance,
-            "statut": f.statut,
-            "notes": f.notes
-        }
-        for f in factures
-    ]
+
+# ============================================================
+# 2. ROUTES AVEC PARAMÈTRE (doivent venir APRÈS les routes fixes)
+# ============================================================
 
 @router.get("/factures/{facture_id}", response=FactureSchema)
 def get_facture(request, facture_id: int):
@@ -115,25 +146,38 @@ def get_facture(request, facture_id: int):
         "notes": facture.notes
     }
 
-@router.get("/factures/en-attente", response=List[FactureSchema])
-def factures_en_attente(request):
-    factures = Facture.objects.filter(statut='EN_ATTENTE').select_related('reservation')
+
+@router.get("/factures/{facture_id}/paiements", response=List[PaiementSchema])
+def paiements_par_facture(request, facture_id: int):
+    facture = get_object_or_404(Facture, id=facture_id)
+    paiements = facture.paiements.all()
     return [
         {
-            "id": f.id,
-            "numero_facture": f.numero_facture,
-            "reservation_id": f.reservation.id,
-            "montant_total": f.montant_total,
-            "montant_paye": f.montant_paye,
-            "date_emission": f.date_emission.isoformat(),
-            "date_echeance": f.date_echeance,
-            "statut": f.statut,
-            "notes": f.notes
+            "id": p.id,
+            "facture_id": p.facture.id,
+            "montant": p.montant,
+            "moyen": p.moyen,
+            "reference": p.reference,
+            "date_paiement": p.date_paiement.isoformat(),
+            "statut": p.statut,
+            "notes": p.notes
         }
-        for f in factures
+        for p in paiements
     ]
 
+
+@router.get("/factures/{facture_id}/pdf", auth=None)
+def telecharger_facture_pdf(request, facture_id: int):
+    """Télécharger la facture au format PDF"""
+    facture = get_object_or_404(Facture, id=facture_id)
+    pdf_content = generer_facture_pdf(facture)
+    response = HttpResponse(pdf_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="facture_{facture.numero_facture}.pdf"'
+    return response
+
+
 # ============ ENDPOINTS PAIEMENTS ============
+
 @router.post("/paiements", response={201: dict, 400: dict})
 def creer_paiement(request, payload: PaiementCreateSchema):
     try:
@@ -159,6 +203,7 @@ def creer_paiement(request, payload: PaiementCreateSchema):
     except Exception as e:
         return 400, {"error": str(e)}
 
+
 @router.get("/paiements", response=List[PaiementSchema])
 def list_paiements(request):
     paiements = Paiement.objects.all().select_related('facture')
@@ -176,6 +221,7 @@ def list_paiements(request):
         for p in paiements
     ]
 
+
 @router.get("/paiements/{paiement_id}", response=PaiementSchema)
 def get_paiement(request, paiement_id: int):
     paiement = get_object_or_404(Paiement, id=paiement_id)
@@ -190,25 +236,9 @@ def get_paiement(request, paiement_id: int):
         "notes": paiement.notes
     }
 
-@router.get("/factures/{facture_id}/paiements", response=List[PaiementSchema])
-def paiements_par_facture(request, facture_id: int):
-    facture = get_object_or_404(Facture, id=facture_id)
-    paiements = facture.paiements.all()
-    return [
-        {
-            "id": p.id,
-            "facture_id": p.facture.id,
-            "montant": p.montant,
-            "moyen": p.moyen,
-            "reference": p.reference,
-            "date_paiement": p.date_paiement.isoformat(),
-            "statut": p.statut,
-            "notes": p.notes
-        }
-        for p in paiements
-    ]
 
 # ============ PAIEMENT AIRTEL ============
+
 @router.post("/paiements-airtel")
 def paiement_airtel(request, payload: PaiementAirtelSchema):
     """Effectuer un paiement via Airtel Money (simulation)"""
@@ -242,11 +272,3 @@ def paiement_airtel(request, payload: PaiementAirtelSchema):
             
     except Exception as e:
         return 400, {"error": str(e)}
-@router.get("/factures/{facture_id}/pdf",auth=None)
-def telecharger_facture_pdf(request, facture_id: int):
-    """Télécharger la facture au format PDF"""
-    facture = get_object_or_404(Facture, id=facture_id)
-    pdf_content = generer_facture_pdf(facture)
-    response = HttpResponse(pdf_content, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="facture_{facture.numero_facture}.pdf"'
-    return response  

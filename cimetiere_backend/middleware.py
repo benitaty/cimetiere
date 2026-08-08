@@ -1,48 +1,32 @@
 # cimetiere_backend/middleware.py
-from django.middleware.csrf import CsrfViewMiddleware
-from django.http import JsonResponse
-from users.models import UserToken
+from django.contrib.auth import get_user_model
+from django.utils.deprecation import MiddlewareMixin
+from django.conf import settings
 
-class CustomCsrfMiddleware(CsrfViewMiddleware):
-    """
-    Middleware CSRF qui ignore les requêtes commençant par /api/.
-    """
+class DebugAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        # Ignorer la vérification CSRF pour toutes les routes /api/
-        if request.path.startswith('/api/'):
-            return None  # Ne pas appliquer la vérification CSRF
-        # Appliquer la vérification CSRF normale pour les autres routes
-        return super().process_request(request)
+        if settings.DEBUG and request.path.startswith('/admin/'):
+            User = get_user_model()
+            user, created = User.objects.get_or_create(
+                email='admin@debug.local',
+                defaults={
+                    'nom': 'Debug',
+                    'prenom': 'Admin',
+                    'is_staff': True,
+                    'is_superuser': True,
+                    'is_active': True,
+                }
+            )
+            if created:
+                user.set_password('debugpass')
+                user.save()
+            else:
+                # S'assurer que l'utilisateur a les droits
+                user.is_staff = True
+                user.is_superuser = True
+                user.is_active = True
+                user.save()
 
-
-class TokenAuthMiddleware:
-    """
-    Middleware d'authentification par token pour l'API.
-    """
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        # Ne pas bloquer les requêtes qui ne sont pas destinées à l'API
-        if not request.path.startswith('/api/'):
-            return self.get_response(request)
-
-        # Exclure les endpoints publics
-        if (request.path.startswith('/api/users/signin') or
-            request.path.startswith('/api/users/signin/verifier-otp') or
-            request.path.startswith('/api/users/signin/renvoyer-otp') or
-            request.path.startswith('/api/public/')):
-            return self.get_response(request)
-
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Token '):
-            return JsonResponse({"error": "Token manquant ou invalide"}, status=401)
-
-        token_key = auth_header.split(' ')[1]
-        try:
-            token = UserToken.objects.get(token=token_key)
-            request.user = token.user
-        except UserToken.DoesNotExist:
-            return JsonResponse({"error": "Token invalide"}, status=401)
-
-        return self.get_response(request)
+            # Assigner directement l'utilisateur à la requête
+            request.user = user
+            return None  # Continue le traitement normal

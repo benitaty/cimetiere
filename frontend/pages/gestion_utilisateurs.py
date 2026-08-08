@@ -2,29 +2,22 @@
 import flet as ft
 import requests
 
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
+
 class GestionUtilisateursPage:
     def __init__(self, page: ft.Page, session, go_back):
         self.page = page
         self.session = session
         self.go_back = go_back
-        self.users = []
+        self.utilisateurs = []
         self.status = ft.Text("", size=14, color=ft.Colors.RED_700)
         self.liste_container = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
 
-        # En-tête
+        # --- En-tête avec bouton Retour ---
         header_row = ft.Row(
             [
                 ft.Text("👥 Gestion des utilisateurs", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
                 ft.Container(expand=True),
-                ft.ElevatedButton(
-                    "➕ Créer un utilisateur",
-                    icon="add",
-                    on_click=self.ouvrir_dialog_creation,
-                    width=200,
-                    height=40,
-                    bgcolor=ft.Colors.GREEN_600,
-                    color=ft.Colors.WHITE,
-                ),
                 ft.ElevatedButton(
                     "Retour",
                     icon="arrow_back",
@@ -33,16 +26,123 @@ class GestionUtilisateursPage:
                     height=40,
                     bgcolor=ft.Colors.GREY_300,
                     color=ft.Colors.BLACK,
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=10),
+                        text_style=ft.TextStyle(weight=ft.FontWeight.W_500),
+                    ),
                 ),
             ],
             alignment=ft.MainAxisAlignment.START,
             spacing=10,
         )
 
-        self.liste_container = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
+        # --- Bouton pour créer un utilisateur ---
+        self.btn_creer = ft.ElevatedButton(
+            "➕ Nouvel utilisateur",
+            icon="person_add",
+            on_click=self.afficher_formulaire_creation,
+            width=200,
+            height=40,
+            bgcolor=ft.Colors.GREEN_700,
+            color=ft.Colors.WHITE,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=10),
+                text_style=ft.TextStyle(weight=ft.FontWeight.BOLD, size=13),
+            ),
+        )
 
+        # --- Formulaire de création (caché par défaut) ---
+        self.form_container = ft.Column(
+            [
+                ft.Text("📝 Créer un utilisateur", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+                ft.TextField(
+                    label="Email",
+                    width=300,
+                    prefix_icon="email",
+                    border=ft.InputBorder.OUTLINE,
+                    border_color=ft.Colors.BLUE_200,
+                    focused_border_color=ft.Colors.BLUE_700,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                ft.TextField(
+                    label="Nom",
+                    width=300,
+                    prefix_icon="person",
+                    border=ft.InputBorder.OUTLINE,
+                    border_color=ft.Colors.BLUE_200,
+                    focused_border_color=ft.Colors.BLUE_700,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                ft.TextField(
+                    label="Prénom",
+                    width=300,
+                    prefix_icon="person",
+                    border=ft.InputBorder.OUTLINE,
+                    border_color=ft.Colors.BLUE_200,
+                    focused_border_color=ft.Colors.BLUE_700,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                ft.TextField(
+                    label="Mot de passe",
+                    width=300,
+                    prefix_icon="lock",
+                    password=True,
+                    can_reveal_password=True,
+                    border=ft.InputBorder.OUTLINE,
+                    border_color=ft.Colors.BLUE_200,
+                    focused_border_color=ft.Colors.BLUE_700,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                ft.Dropdown(
+                    label="Rôle",
+                    width=300,
+                    options=[
+                        ft.dropdown.Option("ADMIN", "Administrateur"),
+                        ft.dropdown.Option("AGENT", "Agent de terrain"),
+                        ft.dropdown.Option("SECRETARIAT", "Secrétariat"),
+                        ft.dropdown.Option("CLIENT", "Client/Citoyen"),
+                    ],
+                    border=ft.InputBorder.OUTLINE,
+                    border_color=ft.Colors.BLUE_200,
+                    focused_border_color=ft.Colors.BLUE_700,
+                    bgcolor=ft.Colors.WHITE,
+                ),
+                ft.Row(
+                    [
+                        ft.ElevatedButton(
+                            "✅ Créer",
+                            icon="check",
+                            on_click=self.creer_utilisateur,
+                            bgcolor=ft.Colors.GREEN_700,
+                            color=ft.Colors.WHITE,
+                        ),
+                        ft.ElevatedButton(
+                            "❌ Annuler",
+                            icon="cancel",
+                            on_click=self.cacher_formulaire,
+                            bgcolor=ft.Colors.GREY_300,
+                            color=ft.Colors.BLACK,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=15,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+            visible=False,
+        )
+
+        # --- Formulaire principal ---
         form = ft.Column(
-            [header_row, ft.Divider(height=15), self.liste_container, self.status],
+            [
+                header_row,
+                ft.Row([self.btn_creer], alignment=ft.MainAxisAlignment.CENTER),
+                self.form_container,
+                ft.Divider(height=15, thickness=1, color=ft.Colors.GREY_300),
+                self.liste_container,
+                self.status,
+            ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15,
             expand=True,
@@ -52,13 +152,13 @@ class GestionUtilisateursPage:
             content=ft.Container(
                 content=form,
                 padding=20,
-                width=950,
+                width=850,
                 bgcolor=ft.Colors.WHITE,
                 border_radius=20,
-                height=650,
+                height=600,
             ),
             elevation=20,
-            width=950,
+            width=850,
         )
 
         self.content = ft.Container(
@@ -74,14 +174,13 @@ class GestionUtilisateursPage:
         return self.content
 
     def charger_utilisateurs(self):
-        print(">>> Chargement des utilisateurs")
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/users/", timeout=300)
+            response = self.session.get(f"{API_URL}/users/", timeout=30)
             if response.status_code == 200:
-                self.users = response.json()
+                self.utilisateurs = response.json()
                 self.afficher_utilisateurs()
             else:
-                self.status.value = f"Erreur {response.status_code}: {response.text[:100]}"
+                self.status.value = f"⚠️ Erreur API: {response.status_code} - {response.text}"
                 self.status.color = ft.Colors.RED_700
         except Exception as e:
             self.status.value = f"❌ Erreur: {e}"
@@ -90,52 +189,99 @@ class GestionUtilisateursPage:
 
     def afficher_utilisateurs(self):
         self.liste_container.controls.clear()
-        if not self.users:
+
+        if not self.utilisateurs:
             self.liste_container.controls.append(
                 ft.Text("Aucun utilisateur trouvé.", size=16, color=ft.Colors.GREY_600)
             )
             return
 
-        for user in self.users:
-            dropdown = ft.Dropdown(
-                width=150,
-                value=user['role'],
-                options=[
-                    ft.dropdown.Option("ADMIN", "Admin"),
-                    ft.dropdown.Option("AGENT", "Agent"),
-                    ft.dropdown.Option("SECRETARIAT", "Secrétariat"),
-                    ft.dropdown.Option("CLIENT", "Client"),
-                ],
-            )
-            dropdown.on_change = lambda e, uid=user['id'], d=dropdown: self.changer_role(uid, d.value)
+        for u in self.utilisateurs:
+            user_id = u.get('id', 'N/A')
+            email = u.get('email', 'N/A')
+            nom = u.get('nom', 'N/A')
+            prenom = u.get('prenom', 'N/A')
+            role = u.get('role', 'INCONNU')
 
-            # Bouton Supprimer
-            btn_supprimer = ft.ElevatedButton(
-                "🗑️",
-                on_click=lambda e, uid=user['id']: self.confirmer_suppression(uid),
-                width=40,
-                height=40,
-                bgcolor=ft.Colors.RED_100,
-                color=ft.Colors.RED_700,
-                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
-            )
+            couleur_role = {
+                'ADMIN': ft.Colors.RED_700,
+                'AGENT': ft.Colors.BLUE_700,
+                'SECRETARIAT': ft.Colors.GREEN_700,
+                'CLIENT': ft.Colors.ORANGE_700,
+            }.get(role, ft.Colors.GREY_700)
 
             info_row = ft.Row(
                 [
-                    ft.Text(f"ID: {user['id']}", width=50, weight=ft.FontWeight.BOLD),
-                    ft.Text(user['email'], width=250),
-                    ft.Text(f"{user['nom']} {user['prenom']}", width=200),
-                    dropdown,
-                    btn_supprimer,
+                    ft.Text(f"ID: {user_id}", width=60, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"{nom} {prenom}", width=180),
+                    ft.Text(email, width=200),
+                    ft.Container(
+                        content=ft.Text(role, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        bgcolor=couleur_role,
+                        padding=8,
+                        border_radius=12,
+                    ),
                 ],
                 alignment=ft.MainAxisAlignment.START,
-                spacing=10,
-                expand=True,
+                spacing=8,
                 wrap=True,
             )
 
+            # ========== REMPLACEMENT PAR UNE ROW DE BOUTONS POUR LE RÔLE ==========
+            def make_role_handler(uid, new_role):
+                def handler(e):
+                    self.changer_role(uid, new_role)
+                return handler
+
+            role_buttons = ft.Row(
+                [
+                    ft.OutlinedButton(
+                        "Admin",
+                        on_click=make_role_handler(user_id, "ADMIN"),
+                        style=ft.ButtonStyle(text_style=ft.TextStyle(size=10)),
+                        width=60,
+                        height=30,
+                    ),
+                    ft.OutlinedButton(
+                        "Agent",
+                        on_click=make_role_handler(user_id, "AGENT"),
+                        style=ft.ButtonStyle(text_style=ft.TextStyle(size=10)),
+                        width=60,
+                        height=30,
+                    ),
+                    ft.OutlinedButton(
+                        "Secrétariat",
+                        on_click=make_role_handler(user_id, "SECRETARIAT"),
+                        style=ft.ButtonStyle(text_style=ft.TextStyle(size=8)),
+                        width=70,
+                        height=30,
+                    ),
+                    ft.OutlinedButton(
+                        "Client",
+                        on_click=make_role_handler(user_id, "CLIENT"),
+                        style=ft.ButtonStyle(text_style=ft.TextStyle(size=10)),
+                        width=60,
+                        height=30,
+                    ),
+                ],
+                spacing=5,
+                wrap=True,
+            )
+
+            btn_supprimer = ft.TextButton(
+                "🗑️",
+                on_click=lambda e, uid=user_id: self.supprimer_utilisateur(uid),
+                style=ft.ButtonStyle(color=ft.Colors.RED_700, text_style=ft.TextStyle(size=20)),
+                tooltip="Supprimer",
+            )
+
             ligne = ft.Container(
-                content=info_row,
+                content=ft.Row(
+                    [info_row, role_buttons, btn_supprimer],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    spacing=10,
+                    wrap=True,
+                ),
                 padding=10,
                 bgcolor=ft.Colors.WHITE,
                 border_radius=8,
@@ -145,149 +291,95 @@ class GestionUtilisateursPage:
 
         self.page.update()
 
-    def changer_role(self, user_id, nouveau_role):
-        print(f">>> Changement rôle pour l'utilisateur {user_id} vers {nouveau_role}")
+    def afficher_formulaire_creation(self, e):
+        self.form_container.visible = True
+        self.page.update()
+
+    def cacher_formulaire(self, e):
+        self.form_container.visible = False
+        self.page.update()
+
+    def creer_utilisateur(self, e):
+        champs = self.form_container.controls
+        email = champs[1].value
+        nom = champs[2].value
+        prenom = champs[3].value
+        password = champs[4].value
+        role = champs[5].value
+
+        if not all([email, nom, prenom, password, role]):
+            self.status.value = "⚠️ Tous les champs sont obligatoires."
+            self.status.color = ft.Colors.RED_700
+            self.page.update()
+            return
+
+        payload = {
+            "email": email,
+            "nom": nom,
+            "prenom": prenom,
+            "password": password,
+            "role": role,
+        }
+
         try:
-            response = self.session.put(
-                f"http://127.0.0.1:8000/api/users/{user_id}/role",
-                json={"role": nouveau_role},
-                timeout=300,
-            )
-            if response.status_code == 200:
-                self.status.value = f"✅ Rôle mis à jour pour l'utilisateur #{user_id}"
+            response = self.session.post(f"{API_URL}/users/", json=payload, timeout=30)
+            if response.status_code == 201:
+                self.status.value = f"✅ Utilisateur {email} créé !"
                 self.status.color = ft.Colors.GREEN_700
+                self.cacher_formulaire(e)
                 self.charger_utilisateurs()
             else:
-                error = response.json().get("error", "Erreur")
-                self.status.value = f"❌ {error}"
+                try:
+                    error = response.json().get("error", "Erreur inconnue")
+                except:
+                    error = response.text
+                self.status.value = f"❌ Erreur: {error}"
                 self.status.color = ft.Colors.RED_700
-        except Exception as e:
-            self.status.value = f"❌ Erreur: {e}"
+        except Exception as ex:
+            self.status.value = f"❌ Erreur: {ex}"
             self.status.color = ft.Colors.RED_700
         self.page.update()
 
-    def confirmer_suppression(self, user_id):
-        print(f">>> Confirmation suppression pour l'utilisateur {user_id}")
-        def supprimer(e):
-            print(f">>> Suppression de l'utilisateur {user_id}")
-            try:
-                response = self.session.delete(
-                    f"http://127.0.0.1:8000/api/users/{user_id}",
-                    timeout=300,
-                )
-                if response.status_code == 200:
-                    self.status.value = f"✅ Utilisateur #{user_id} supprimé avec succès"
-                    self.status.color = ft.Colors.GREEN_700
-                    self.charger_utilisateurs()
-                else:
-                    error = response.json().get("error", "Erreur")
-                    self.status.value = f"❌ {error}"
-                    self.status.color = ft.Colors.RED_700
-                self.page.update()
-                dialog.open = False
-                self.page.update()
-            except Exception as e:
-                self.status.value = f"❌ Erreur: {e}"
+    def changer_role(self, user_id, new_role):
+        if not new_role:
+            return
+        try:
+            response = self.session.put(
+                f"{API_URL}/users/{user_id}/role",
+                json={"role": new_role},
+                timeout=30,
+            )
+            if response.status_code == 200:
+                self.status.value = f"✅ Rôle de l'utilisateur {user_id} mis à jour."
+                self.status.color = ft.Colors.GREEN_700
+                self.charger_utilisateurs()
+            else:
+                try:
+                    error = response.json().get("error", "Erreur inconnue")
+                except:
+                    error = response.text
+                self.status.value = f"❌ Erreur: {error}"
                 self.status.color = ft.Colors.RED_700
-                self.page.update()
-
-        dialog = ft.AlertDialog(
-            title=ft.Text("Confirmation de suppression"),
-            content=ft.Text("Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible."),
-            actions=[
-                ft.TextButton("Annuler", on_click=lambda e: setattr(dialog, 'open', False) or self.page.update()),
-                ft.ElevatedButton("Supprimer", on_click=supprimer, bgcolor=ft.Colors.RED_700, color=ft.Colors.WHITE),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-        )
-        # Utiliser overlay pour afficher le dialogue
-        self.page.overlay.append(dialog)
-        dialog.open = True
+        except Exception as ex:
+            self.status.value = f"❌ Erreur: {ex}"
+            self.status.color = ft.Colors.RED_700
         self.page.update()
-        print("Dialog suppression ouvert (overlay)")
 
-    def ouvrir_dialog_creation(self, e):
-        print(">>> Ouvrir dialog création")
-        email_field = ft.TextField(label="Email", width=300)
-        password_field = ft.TextField(label="Mot de passe", password=True, width=300, can_reveal_password=True)
-        nom_field = ft.TextField(label="Nom", width=300)
-        prenom_field = ft.TextField(label="Prénom", width=300)
-        role_dropdown = ft.Dropdown(
-            width=300,
-            value="CLIENT",
-            options=[
-                ft.dropdown.Option("ADMIN", "Admin"),
-                ft.dropdown.Option("AGENT", "Agent"),
-                ft.dropdown.Option("SECRETARIAT", "Secrétariat"),
-                ft.dropdown.Option("CLIENT", "Client"),
-            ],
-        )
-        status_msg = ft.Text("", size=14, color=ft.Colors.RED_700)
-
-        def creer_utilisateur(e):
-            print(">>> Tentative de création d'utilisateur")
-            email = email_field.value
-            password = password_field.value
-            nom = nom_field.value
-            prenom = prenom_field.value
-            role = role_dropdown.value
-
-            if not all([email, password, nom, prenom, role]):
-                status_msg.value = "⚠️ Tous les champs sont obligatoires."
-                status_msg.color = ft.Colors.RED_700
-                self.page.update()
-                return
-
-            try:
-                response = self.session.post(
-                    "http://127.0.0.1:8000/api/users/",
-                    json={
-                        "email": email,
-                        "password": password,
-                        "nom": nom,
-                        "prenom": prenom,
-                        "role": role,
-                    },
-                    timeout=300,
-                )
-                if response.status_code == 200:
-                    status_msg.value = "✅ Utilisateur créé avec succès !"
-                    status_msg.color = ft.Colors.GREEN_700
-                    self.page.update()
-                    dialog.open = False
-                    self.page.update()
-                    self.charger_utilisateurs()
-                else:
-                    error = response.json().get("error", "Erreur")
-                    status_msg.value = f"❌ {error}"
-                    status_msg.color = ft.Colors.RED_700
-                    self.page.update()
-            except Exception as e:
-                status_msg.value = f"❌ Erreur: {e}"
-                status_msg.color = ft.Colors.RED_700
-                self.page.update()
-
-        dialog = ft.AlertDialog(
-            title=ft.Text("Créer un utilisateur"),
-            content=ft.Column(
-                [
-                    email_field,
-                    password_field,
-                    nom_field,
-                    prenom_field,
-                    role_dropdown,
-                    status_msg,
-                ],
-                spacing=15,
-                width=400,
-            ),
-            actions=[
-                ft.TextButton("Annuler", on_click=lambda e: setattr(dialog, 'open', False) or self.page.update()),
-                ft.ElevatedButton("Créer", on_click=creer_utilisateur, bgcolor=ft.Colors.GREEN_700, color=ft.Colors.WHITE),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-        )
-        self.page.overlay.append(dialog)
-        dialog.open = True
+    def supprimer_utilisateur(self, user_id):
+        try:
+            response = self.session.delete(f"{API_URL}/users/{user_id}", timeout=30)
+            if response.status_code == 200:
+                self.status.value = f"✅ Utilisateur {user_id} supprimé."
+                self.status.color = ft.Colors.GREEN_700
+                self.charger_utilisateurs()
+            else:
+                try:
+                    error = response.json().get("error", "Erreur inconnue")
+                except:
+                    error = response.text
+                self.status.value = f"❌ Erreur: {error}"
+                self.status.color = ft.Colors.RED_700
+        except Exception as ex:
+            self.status.value = f"❌ Erreur: {ex}"
+            self.status.color = ft.Colors.RED_700
         self.page.update()
-        print("Dialog création ouvert (overlay)")

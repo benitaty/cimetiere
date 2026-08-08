@@ -236,6 +236,7 @@ class LoginPage:
             )
             if response.status_code == 200:
                 data = response.json()
+                print("🔑 Token reçu :", data.get("token"))
                 if data.get("authenticated"):
                     # Récupérer les données utilisateur et le token
                     user_data = {
@@ -252,6 +253,7 @@ class LoginPage:
                     self.page.update()
 
                     # Appeler la fonction de callback avec les données ET le token
+                    print("📤 Envoi du token à main.py :", token)
                     self.on_login_success(user_data, token)
                 else:
                     self.status.value = data.get("error", "Code invalide ou expiré.")

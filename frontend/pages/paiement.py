@@ -1,7 +1,8 @@
 # frontend/pages/paiement.py
 import flet as ft
-import requests
-import webbrowser
+
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
+#API_URL = "http://127.0.0.1:8000/api"
 
 class PaiementPage:
     def __init__(self, page: ft.Page, session, go_back):
@@ -9,53 +10,36 @@ class PaiementPage:
         self.session = session
         self.go_back = go_back
         self.factures = []
-        self.status = ft.Text("", size=14, color=ft.Colors.RED_700)
         self.liste_container = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
+        self.formulaire_container = ft.Container(visible=False)  # Conteneur pour le formulaire
 
         # En-tête
-        header_row = ft.Row(
+        header = ft.Row(
             [
-                ft.Text("💰 Gestion des paiements", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+                ft.Text("💰 Paiements", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
                 ft.Container(expand=True),
-                ft.ElevatedButton(
-                    "Retour",
-                    icon="arrow_back",
-                    on_click=lambda e: self.go_back(),
-                    width=120,
-                    height=40,
-                    bgcolor=ft.Colors.GREY_300,
-                    color=ft.Colors.BLACK,
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.START,
-            spacing=10,
+                ft.ElevatedButton("Retour", icon="arrow_back", on_click=lambda e: self.go_back()),
+            ]
         )
 
-        form = ft.Column(
-            [header_row, ft.Divider(height=15), self.liste_container, self.status],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=15,
-            expand=True,
-        )
+        self.status = ft.Text("Chargement...", size=14, color=ft.Colors.GREY_600)
 
-        card = ft.Card(
-            content=ft.Container(
-                content=form,
-                padding=20,
-                width=900,
-                bgcolor=ft.Colors.WHITE,
-                border_radius=20,
-                height=600,
-            ),
-            elevation=20,
-            width=900,
-        )
-
+        # Contenu principal (liste + formulaire)
         self.content = ft.Container(
-            content=card,
-            alignment=ft.Alignment.CENTER,
+            content=ft.Column(
+                [
+                    header,
+                    ft.Divider(height=10),
+                    self.status,
+                    self.liste_container,
+                    self.formulaire_container,  # Formulaire caché par défaut
+                ],
+                spacing=10,
+                expand=True,
+            ),
+            padding=20,
             expand=True,
-            gradient=ft.LinearGradient(colors=[ft.Colors.BLUE_50, ft.Colors.WHITE]),
+            bgcolor=ft.Colors.GREY_50,
         )
 
         self.charger_factures()
@@ -64,135 +48,181 @@ class PaiementPage:
         return self.content
 
     def charger_factures(self):
+        """Récupère les factures et affiche la liste"""
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/finances/factures", timeout=300)
+            url = f"{API_URL}/finances/factures"
+            print(f"🔍 Appel : {url}")
+            response = self.session.get(url, timeout=30)
+            print(f"📦 Statut : {response.status_code}")
+
             if response.status_code == 200:
-                self.factures = response.json()
-                self.afficher_factures()
+                toutes = response.json()
+                print(f"📦 Nombre total : {len(toutes)}")
+                self.factures = toutes
+                self._afficher_liste()
+                self.status.value = f"✅ {len(self.factures)} facture(s) affichée(s)"
+                self.status.color = ft.Colors.GREEN_700
             else:
-                self.status.value = f"⚠️ Erreur API: {response.status_code}"
+                self.status.value = f"❌ Erreur {response.status_code} : {response.text[:100]}"
                 self.status.color = ft.Colors.RED_700
+
         except Exception as e:
-            self.status.value = f"❌ Erreur: {e}"
+            self.status.value = f"❌ Exception : {e}"
             self.status.color = ft.Colors.RED_700
+
         self.page.update()
 
-    def afficher_factures(self):
+    def _afficher_liste(self):
+        """Affiche la liste des factures (masque le formulaire)"""
+        self.formulaire_container.visible = False
+        self.liste_container.visible = True
         self.liste_container.controls.clear()
 
         if not self.factures:
             self.liste_container.controls.append(
-                ft.Text("Aucune facture trouvée.", size=16, color=ft.Colors.GREY_600)
+                ft.Text("✅ Aucune facture trouvée.", size=16, color=ft.Colors.GREEN_700)
             )
-            return
-
-        factures_impayees = [f for f in self.factures if f['statut'] in ['EN_ATTENTE', 'PARTIELLE']]
-
-        if not factures_impayees:
-            self.liste_container.controls.append(
-                ft.Text("✅ Toutes les factures sont payées !", size=16, color=ft.Colors.GREEN_700)
-            )
-            return
-
-        for f in factures_impayees:
-            info_row = ft.Row(
-                [
-                    ft.Text(f"#{f['id']}", width=40, weight=ft.FontWeight.BOLD),
-                    ft.Text(f"Rés: {f['reservation_id']}", width=80),
-                    ft.Text(f"{f['montant_total']} FCFA", width=100),
-                    ft.Text(f"Payé: {f['montant_paye']} FCFA", width=120),
-                    ft.Text(f"Échéance: {f['date_echeance']}", width=120),
-                    ft.Container(
-                        content=ft.Text(f['statut'], size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-                        bgcolor=ft.Colors.ORANGE_700,
-                        padding=8,
-                        border_radius=12,
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                spacing=8,
-                wrap=True,
-            )
-
-            telephone_field = ft.TextField(
-                label="Numéro Airtel",
-                width=160,
-                height=40,
-                hint_text="0612345678",
-                border=ft.InputBorder.OUTLINE,
-                border_color=ft.Colors.BLUE_200,
-                focused_border_color=ft.Colors.BLUE_700,
-                text_style=ft.TextStyle(size=12),
-            )
-
-            btn_payer = ft.ElevatedButton(
-                "💳 Payer",
-                icon="payments",
-                on_click=lambda e, fid=f['id'], tel_field=telephone_field: self.effectuer_paiement(fid, tel_field.value),
-                width=110,
-                height=40,
-                bgcolor=ft.Colors.GREEN_700,
-                color=ft.Colors.WHITE,
-            )
-
-            # Bouton PDF (corrigé : utilisation de ElevatedButton au lieu de IconButton)
-            btn_pdf = ft.ElevatedButton(
-                "📄 PDF",
-                icon="picture_as_pdf",
-                on_click=lambda e, fid=f['id']: self.telecharger_pdf(fid),
-                width=80,
-                height=40,
-                bgcolor=ft.Colors.BLUE_600,
-                color=ft.Colors.WHITE,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(size=12)),
-            )
-
-            ligne = ft.Container(
-                content=ft.Row(
-                    [info_row, telephone_field, btn_payer, btn_pdf],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    spacing=10,
-                    wrap=True,
-                ),
-                padding=10,
-                bgcolor=ft.Colors.WHITE,
-                border_radius=8,
-                shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.GREY_200),
-            )
-            self.liste_container.controls.append(ligne)
-
-        self.page.update()
-
-    def telecharger_pdf(self, facture_id):
-        url = f"http://127.0.0.1:8000/api/finances/factures/{facture_id}/pdf"
-        webbrowser.open(url)
-        self.status.value = f"📄 Téléchargement de la facture #{facture_id} en cours..."
-        self.status.color = ft.Colors.BLUE_700
-        self.page.update()
-
-    def effectuer_paiement(self, facture_id, telephone):
-        if not telephone or len(telephone) < 9:
-            self.status.value = "⚠️ Numéro de téléphone invalide."
-            self.status.color = ft.Colors.RED_700
             self.page.update()
             return
 
-        try:
-            response = self.session.post(
-                "http://127.0.0.1:8000/api/finances/paiements-airtel",
-                json={"facture_id": facture_id, "numero_telephone": telephone},
-                timeout=300,
-            )
-            if response.status_code == 200:
-                data = response.json()
-                self.status.value = f"✅ Paiement effectué ! Transaction: {data.get('transaction_id', 'N/A')}"
-                self.status.color = ft.Colors.GREEN_700
-                self.charger_factures()
-            else:
-                error = response.json().get("error", "Erreur inconnue")
-                self.status.value = f"❌ Erreur: {error}"
-                self.status.color = ft.Colors.RED_700
-        except Exception as e:
-            self.status.value = f"❌ Erreur: {e}"
-            self.status.color = ft.Colors.RED_700
+        for facture in self.factures:
+            card = self._creer_carte(facture)
+            self.liste_container.controls.append(card)
+
         self.page.update()
+
+    def _creer_carte(self, facture):
+        statut = facture.get('statut', 'INCONNU')
+        est_impayee = statut == 'EN_ATTENTE'
+
+        return ft.Card(
+            content=ft.Container(
+                content=ft.Row(
+                    [
+                        ft.Column([
+                            ft.Text(f"Facture #{facture.get('numero_facture', 'N/A')}", size=16, weight=ft.FontWeight.BOLD),
+                            ft.Text(f"Montant : {facture.get('montant_total', 0)} FCFA", size=14),
+                            ft.Text(f"Échéance : {facture.get('date_echeance', '')}", size=12, color=ft.Colors.GREY_600),
+                            ft.Container(
+                                content=ft.Text(statut, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                bgcolor=ft.Colors.ORANGE_700 if est_impayee else ft.Colors.GREEN_700,
+                                padding=5,
+                                border_radius=8,
+                            ),
+                        ], spacing=5, expand=True),
+                        ft.ElevatedButton(
+                            "💰 Payer",
+                            icon="payment",
+                            on_click=lambda e, fid=facture.get('id'): self._afficher_formulaire(fid),
+                            bgcolor=ft.Colors.GREEN_700,
+                            color=ft.Colors.WHITE,
+                        ) if est_impayee else ft.Text("Payée", size=14, color=ft.Colors.GREEN_700),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                padding=15,
+            ),
+            elevation=4,
+            margin=5,
+        )
+
+    def _afficher_formulaire(self, facture_id):
+        """Remplace la liste par le formulaire de paiement"""
+        print(f"🔑 Paiement déclenché pour la facture {facture_id}")
+
+        # Champ numéro
+        numero_field = ft.TextField(
+            label="Numéro Airtel",
+            hint_text="Ex: 0612345678",
+            width=300,
+            keyboard_type=ft.KeyboardType.PHONE,
+        )
+
+        status_msg = ft.Text("", size=14, color=ft.Colors.GREY_600)
+
+        def confirmer_paiement(e):
+            numero = numero_field.value
+            if not numero:
+                status_msg.value = "❌ Numéro requis"
+                status_msg.color = ft.Colors.RED_700
+                self.page.update()
+                return
+
+            try:
+                payload = {"facture_id": facture_id, "numero_telephone": numero}
+                print(f"📤 Payload : {payload}")
+                response = self.session.post(
+                    f"{API_URL}/finances/paiements-airtel",
+                    json=payload,
+                    timeout=30
+                )
+                print(f"📦 Statut paiement : {response.status_code}")
+                if response.status_code == 200:
+                    status_msg.value = "✅ Paiement effectué !"
+                    status_msg.color = ft.Colors.GREEN_700
+                    self.page.update()
+                    # Recharger la liste après 1 seconde
+                    import asyncio
+                    async def recharger():
+                        await asyncio.sleep(1)
+                        self.charger_factures()
+                    self.page.run_task(recharger)
+                else:
+                    error = response.json().get('error', 'Erreur inconnue')
+                    status_msg.value = f"❌ Erreur : {error}"
+                    status_msg.color = ft.Colors.RED_700
+            except Exception as ex:
+                status_msg.value = f"❌ Erreur : {ex}"
+                status_msg.color = ft.Colors.RED_700
+
+            self.page.update()
+
+        # Construction du formulaire
+        formulaire = ft.Column(
+            [
+                ft.Text("💳 Paiement Airtel Money", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+                ft.Text(f"Facture n° {facture_id}", size=14, color=ft.Colors.GREY_600),
+                ft.Divider(height=10),
+                ft.Text("Entrez votre numéro Airtel pour payer la facture.", size=14),
+                numero_field,
+                status_msg,
+                ft.Row(
+                    [
+                        ft.ElevatedButton(
+                            "🔙 Annuler",
+                            on_click=lambda e: self._afficher_liste(),
+                            bgcolor=ft.Colors.GREY_300,
+                            color=ft.Colors.BLACK,
+                        ),
+                        ft.ElevatedButton(
+                            "✅ Confirmer",
+                            on_click=confirmer_paiement,
+                            bgcolor=ft.Colors.GREEN_700,
+                            color=ft.Colors.WHITE,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=15,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=15,
+        )
+
+        # Remplacer le contenu de la liste par le formulaire
+        self.liste_container.controls.clear()
+        self.liste_container.controls.append(
+            ft.Container(
+                content=formulaire,
+                padding=30,
+                bgcolor=ft.Colors.WHITE,
+                border_radius=10,
+                shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.GREY_300),
+            )
+        )
+        self.liste_container.visible = True
+        self.status.value = "💳 Veuillez saisir votre numéro Airtel"
+        self.status.color = ft.Colors.BLUE_700
+        self.page.update()
+        print("✅ Formulaire de paiement affiché")

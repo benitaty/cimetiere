@@ -2,6 +2,8 @@
 import flet as ft
 import requests
 
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
+
 class HistoriquePage:
     def __init__(self, page: ft.Page, session, go_back):
         self.page = page
@@ -37,7 +39,7 @@ class HistoriquePage:
                 ft.DataColumn(ft.Text("Email", width=220)),
                 ft.DataColumn(ft.Text("Début", width=110)),
                 ft.DataColumn(ft.Text("Fin", width=110)),
-                ft.DataColumn(ft.Text("Statut", width=140, weight=ft.FontWeight.BOLD)),  # largeur 140
+                ft.DataColumn(ft.Text("Statut", width=140, weight=ft.FontWeight.BOLD)),
                 ft.DataColumn(ft.Text("Créé par", width=150)),
                 ft.DataColumn(ft.Text("Validé par", width=150)),
             ],
@@ -52,7 +54,7 @@ class HistoriquePage:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15,
             expand=True,
-            scroll=ft.ScrollMode.AUTO,  # défilement vertical OK
+            scroll=ft.ScrollMode.AUTO,
         )
 
         # --- Carte large (1350px) ---
@@ -60,7 +62,7 @@ class HistoriquePage:
             content=ft.Container(
                 content=form,
                 padding=20,
-                width=1350,  # largeur suffisante pour tout afficher
+                width=1350,
                 bgcolor=ft.Colors.WHITE,
                 border_radius=20,
                 height=650,
@@ -83,22 +85,22 @@ class HistoriquePage:
 
     def charger_historique(self):
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/reservations/historique", timeout=300)
+            response = self.session.get(f"{API_URL}/reservations/historique", timeout=30)
             if response.status_code == 200:
                 data = response.json()
                 rows = []
                 for r in data:
                     rows.append(
                         ft.DataRow(cells=[
-                            ft.DataCell(ft.Text(str(r['id']))),
-                            ft.DataCell(ft.Text(r['caveau'])),
-                            ft.DataCell(ft.Text(r['client'])),
-                            ft.DataCell(ft.Text(r['client_email'])),
-                            ft.DataCell(ft.Text(r['date_debut'])),
-                            ft.DataCell(ft.Text(r['date_fin'])),
-                            ft.DataCell(ft.Text(r['statut'])),
-                            ft.DataCell(ft.Text(r['cree_par'])),
-                            ft.DataCell(ft.Text(r['valide_par'])),
+                            ft.DataCell(ft.Text(str(r.get('id', 'N/A')))),
+                            ft.DataCell(ft.Text(r.get('caveau', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('client', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('client_email', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('date_debut', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('date_fin', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('statut', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('cree_par', 'N/A'))),
+                            ft.DataCell(ft.Text(r.get('valide_par', 'N/A'))),
                         ])
                     )
                 self.table.rows = rows

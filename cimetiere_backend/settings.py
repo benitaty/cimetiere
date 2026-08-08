@@ -53,9 +53,10 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'cimetiere_backend.middleware.CustomCsrfMiddleware',  # <-- Remplace CsrfViewMiddleware
-    'cimetiere_backend.middleware.TokenAuthMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',   # <-- Doit être avant
+    'cimetiere_backend.middleware.DebugAuthMiddleware',         # <-- Après AuthenticationMiddleware
+    # 'cimetiere_backend.middleware.CustomCsrfMiddleware',      # COMMENTÉ
+    # 'cimetiere_backend.middleware.TokenAuthMiddleware',       # COMMENTÉ
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

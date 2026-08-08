@@ -2,6 +2,10 @@
 import flet as ft
 import requests
 import re
+import threading
+import time
+
+API_URL = "https://cimetiere-backend-otr7.onrender.com/api"
 
 class CreerReservationPage:
     def __init__(self, page: ft.Page, session, go_back):
@@ -159,7 +163,7 @@ class CreerReservationPage:
 
     def charger_caveaux(self):
         try:
-            response = self.session.get("http://127.0.0.1:8000/api/terrains/caveaux/disponibles", timeout=300)
+            response = self.session.get(f"{API_URL}/terrains/caveaux/disponibles", timeout=30)
             if response.status_code == 200:
                 data = response.json()
                 if not data:
@@ -182,7 +186,7 @@ class CreerReservationPage:
                     if options:
                         self.status.value = ""
             else:
-                self.status.value = f"⚠️ Erreur API: {response.status_code}"
+                self.status.value = f"⚠️ Erreur API: {response.status_code} - {response.text}"
                 self.status.color = ft.Colors.RED_700
         except Exception as e:
             self.status.value = f"❌ Erreur: {e}"
@@ -261,9 +265,9 @@ class CreerReservationPage:
 
         try:
             response = self.session.post(
-                "http://127.0.0.1:8000/api/reservations/reservations",
+                f"{API_URL}/reservations/reservations",
                 json=payload,
-                timeout=10,
+                timeout=30,
             )
 
             # --- Affichage détaillé pour le débogage ---
@@ -274,11 +278,9 @@ class CreerReservationPage:
 
             if response.status_code == 201:
                 data = response.json()
-                self.status.value = f"✅ Réservation créée (ID: {data['reservation_id']})"
+                self.status.value = f"✅ Réservation créée (ID: {data.get('reservation_id', 'N/A')})"
                 self.status.color = ft.Colors.GREEN_700
                 self.page.update()
-                import threading
-                import time
                 def redirect():
                     time.sleep(2)
                     self.go_back()
