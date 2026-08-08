@@ -1,5 +1,7 @@
 services:
-  # Backend Django (existant)
+  # ============================================================
+  # Backend Django (existant – avec Docker)
+  # ============================================================
   - type: web
     name: cimetiere-backend
     env: docker
@@ -16,7 +18,9 @@ services:
       - key: ALLOWED_HOSTS
         value: .onrender.com
 
-  # Frontend Flet (nouveau)
+  # ============================================================
+  # Frontend Flet (nouveau – déploiement Python)
+  # ============================================================
   - type: web
     name: cimetiere-frontend
     env: python
