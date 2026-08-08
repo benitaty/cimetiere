@@ -153,5 +153,7 @@ def main(page: ft.Page):
     page.add(content_container)
     switch_to_login()
 
-if __name__ == "__main__":
-    ft.run(main)
+# ============================================================
+# EXPOSITION DE L'APPLICATION ASGI POUR UVICORN (déploiement web)
+# ============================================================
+app = ft.app(target=main)
